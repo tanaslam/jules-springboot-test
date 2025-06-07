@@ -1,0 +1,79 @@
+# Java
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+
+# Kotlin
+*.kexe
+*.kt.js
+*.kt.meta.js
+*.jar.original
+*.original
+
+# Gradle
+.gradle
+build/
+gradle/wrapper/gradle-wrapper.jar
+gradle/wrapper/gradle-wrapper.properties
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+gradlew
+gradlew.bat
+.gradletasknamecache
+gradle-daemon.out
+gradle-daemon-*.log
+
+# Maven (just in case)
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.vscode/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Application specific
+application.yaml
+application-dev.yaml
+application-prod.yaml
+
+# Secrets
+*.env
+secrets/
+*.pem
+*.key
+*.cer
+
+# Logs
+logs/
+*.log
+
+# Other
+.DS_Store
+*~
+*.swp
