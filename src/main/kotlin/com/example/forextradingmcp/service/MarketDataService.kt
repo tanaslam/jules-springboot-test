@@ -83,7 +83,7 @@ class MarketDataService(
                     DecimalNum.valueOf(value.high),
                     DecimalNum.valueOf(value.low),
                     DecimalNum.valueOf(value.close),
-                    DecimalNum.valueOf(value.volume)
+                    DecimalNum.valueOf(value.volume?.ifBlank { null } ?: "0") // Modified part
                 )
             } catch (e: Exception) {
                 logger.error("Error parsing value entry for $symbol: $value", e)

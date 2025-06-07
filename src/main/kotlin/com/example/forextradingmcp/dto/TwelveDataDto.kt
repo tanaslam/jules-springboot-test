@@ -16,7 +16,7 @@ data class ValueEntry(
     val high: String,
     val low: String,
     val close: String,
-    val volume: String
+    val volume: String?
 )
 
 data class TwelveDataResponse(
