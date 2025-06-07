@@ -17,12 +17,12 @@ class ForexScannerAgent(
     fun scan(context: McpContext): List<Signal> {
         val allSignals = mutableListOf<Signal>()
         logger.info(
-            "Starting forex scan. Context: {} currency pairs, interval={}, outputSize={}, strategyParams={}",
+            "🔎 Starting forex scan. Context: {} currency pairs, interval={}, outputSize={}, strategyParams={}",
             context.currencyPairs.size, context.interval, context.outputSize, context.strategyParameters
         )
 
         for (pair in context.currencyPairs) {
-            logger.info("Scanning pair: {}", pair)
+            logger.info("➡️ Scanning pair: {}", pair)
             try {
                 val barSeries = marketDataService.fetchMarketData(
                     symbol = pair,
@@ -31,11 +31,11 @@ class ForexScannerAgent(
                 )
 
                 if (barSeries.isEmpty) {
-                    logger.warn("No market data returned or bar series is empty for pair: {}. Skipping signal analysis.", pair)
+                    logger.warn("⚠️ No market data returned or bar series is empty for pair: {}. Skipping signal analysis.", pair)
                     continue
                 }
 
-                logger.info("Fetched {} bars for pair: {}. Analyzing for signals.", barSeries.barCount, pair)
+                logger.info("📊 Fetched {} bars for pair: {}. Analyzing for signals.", barSeries.barCount, pair)
 
                 val params = context.strategyParameters
                 val pairSignals = signalAnalysisService.generateSignals(
@@ -50,23 +50,23 @@ class ForexScannerAgent(
                 )
 
                 if (pairSignals.isNotEmpty()) {
-                    logger.info("Found {} signals for pair {}: {}", pairSignals.size, pair, pairSignals.map { it.direction })
+                    logger.info("💡 Found {} signals for pair {}: {}", pairSignals.size, pair, pairSignals.map { it.direction })
                     allSignals.addAll(pairSignals)
                 } else {
-                    logger.info("No signals found for pair: {}", pair)
+                    logger.info("➖ No signals found for pair: {}", pair)
                 }
 
             } catch (e: IllegalStateException) { // Catch API key not configured error specifically
-                 logger.error("Critical error for pair {}: {}. Halting scan for this pair. Please configure the API key.", pair, e.message)
+                 logger.error("🔑 Critical error for pair {}: {}. Halting scan for this pair. Please configure the API key.", pair, e.message)
                  // Depending on desired behavior, we might re-throw or stop all scans
                  // For now, just log and continue to next pair as per requirement "continue to the next pair"
             }catch (e: Exception) {
-                logger.error("Error processing pair {}: {}. Continuing to next pair.", pair, e.message, e)
+                logger.error("❌ Error processing pair {}: {}. Continuing to next pair.", pair, e.message, e)
                 // Continue to the next pair as per requirements
             }
         }
 
-        logger.info("Forex scan completed. Total signals found across all pairs: {}", allSignals.size)
+        logger.info("✨ Forex scan completed. Total signals found across all pairs: {}", allSignals.size)
         return allSignals
     }
 }

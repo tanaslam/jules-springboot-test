@@ -16,13 +16,13 @@ object CsvExporter {
         val dirPath = Paths.get(directory)
         val fullPath = dirPath.resolve(fileName).toString()
 
-        logger.info("Attempting to export {} signals to CSV file: {}", signals.size, fullPath)
+        logger.info("📄 Attempting to export {} signals to CSV file: {}", signals.size, fullPath)
 
         try {
             // Create directory if it doesn't exist
             if (!Files.exists(dirPath)) {
                 Files.createDirectories(dirPath)
-                logger.info("Created directory: {}", directory)
+                logger.info("📁 Created directory: {}", directory)
             }
 
             FileWriter(fullPath).use { writer -> // Using use for automatic resource management
@@ -46,15 +46,15 @@ object CsvExporter {
                     writer.append('\n')
                 }
                 writer.flush()
-                logger.info("Successfully exported signals to {}", fullPath)
+                logger.info("✅ Successfully exported signals to {}", fullPath)
             }
         } catch (e: IOException) {
-            logger.error("Error writing signals to CSV file {}: {}", fullPath, e.message, e)
+            logger.error("❌ Error writing signals to CSV file {}: {}", fullPath, e.message, e)
             // Depending on requirements, might re-throw or handle differently
         } catch (e: SecurityException) {
-            logger.error("Security error while creating directory or file {}: {}", fullPath, e.message, e)
+            logger.error("🛡️ Security error while creating directory or file {}: {}", fullPath, e.message, e) // Changed emoji for SecurityException
         } catch (e: Exception) {
-            logger.error("An unexpected error occurred during CSV export to {}: {}", fullPath, e.message, e)
+            logger.error("💥 An unexpected error occurred during CSV export to {}: {}", fullPath, e.message, e)
         }
     }
 }

@@ -28,44 +28,44 @@ class MarketDataService(
     private val logger = LoggerFactory.getLogger(MarketDataService::class.java)
 
     fun fetchMarketData(symbol: String, interval: String, outputSize: Int = 70): BarSeries {
-        logger.info("Fetching market data for symbol: {}, interval: {}, outputSize: {}", symbol, interval, outputSize)
+        logger.info("📡 Fetching market data for symbol: {}, interval: {}, outputSize: {}", symbol, interval, outputSize)
         if (!::apiKey.isInitialized || apiKey.isBlank() || apiKey == "YOUR_API_KEY_HERE") {
-            logger.error("API key is not configured. Please set forex.data.api_key in application.yaml or FOREX_DATA_API_KEY environment variable.")
+            logger.error("🔑 API key is not configured. Please set forex.data.api_key in application.yaml or FOREX_DATA_API_KEY environment variable.")
             throw IllegalStateException("API key is not configured.")
         }
 
         val url = "https://api.twelvedata.com/time_series?symbol=$symbol&interval=$interval&apikey=$apiKey&outputsize=$outputSize&timezone=UTC&format=JSON"
-        logger.debug("Requesting URL: {}", url)
+        logger.debug("🔗 Requesting URL: {}", url)
 
         val responseBody: String?
         try {
             responseBody = restTemplate.getForObject(url, String::class.java)
         } catch (e: HttpClientErrorException) {
-            logger.error("Client error fetching data from Twelve Data for $symbol: {} - {}", e.statusCode, e.responseBodyAsString, e)
+            logger.error("❌ Client error fetching data from Twelve Data for $symbol: {} - {}", e.statusCode, e.responseBodyAsString, e)
             throw RuntimeException("Client error fetching data from Twelve Data for $symbol: ${e.statusCode}", e)
         } catch (e: HttpServerErrorException) {
-            logger.error("Server error fetching data from Twelve Data for $symbol: {} - {}", e.statusCode, e.responseBodyAsString, e)
+            logger.error("🔥 Server error fetching data from Twelve Data for $symbol: {} - {}", e.statusCode, e.responseBodyAsString, e)
             throw RuntimeException("Server error fetching data from Twelve Data for $symbol: ${e.statusCode}", e)
         } catch (e: Exception) {
-            logger.error("Unexpected error fetching data from Twelve Data for $symbol", e)
+            logger.error("💥 Unexpected error fetching data from Twelve Data for $symbol", e)
             throw RuntimeException("Unexpected error fetching data from Twelve Data for $symbol", e)
         }
 
         if (responseBody == null) {
-            logger.error("Received null response body from Twelve Data for $symbol")
+            logger.error("⁉️ Received null response body from Twelve Data for $symbol")
             throw RuntimeException("Received null response body from Twelve Data for $symbol")
         }
 
         val twelveDataResponse = objectMapper.readValue<TwelveDataResponse>(responseBody)
 
         if (twelveDataResponse.status == "error") {
-            val errorMessage = "Twelve Data API error for $symbol: ${twelveDataResponse.message ?: "Unknown error"}"
+            val errorMessage = "❗ Twelve Data API error for $symbol: ${twelveDataResponse.message ?: "Unknown error"}"
             logger.error(errorMessage)
             throw RuntimeException(errorMessage)
         }
 
         if (twelveDataResponse.values.isNullOrEmpty()) {
-            logger.warn("No data values received from Twelve Data for $symbol. Returning empty series.")
+            logger.warn("⚠️ No data values received from Twelve Data for $symbol. Returning empty series.")
             return BaseBarSeries("$symbol $interval")
         }
 
@@ -86,11 +86,11 @@ class MarketDataService(
                     DecimalNum.valueOf(value.volume?.ifBlank { null } ?: "0") // Modified part
                 )
             } catch (e: Exception) {
-                logger.error("Error parsing value entry for $symbol: $value", e)
+                logger.error("💔 Error parsing value entry for $symbol: $value", e)
                 // Decide if to skip this bar or throw error for the whole series
             }
         }
-        logger.info("Successfully fetched and processed {} bars for symbol: {}", series.barCount, symbol)
+        logger.info("✅ Successfully fetched and processed {} bars for symbol: {}", series.barCount, symbol)
         return series
     }
 }

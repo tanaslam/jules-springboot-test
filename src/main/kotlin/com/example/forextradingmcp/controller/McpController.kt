@@ -20,14 +20,14 @@ class McpController(
 
     @PostMapping("/scan")
     fun processMcpRequest(@RequestBody context: McpContext): ResponseEntity<List<Signal>> {
-        logger.info("Received MCP request to scan with context: {}", context)
+        logger.info("📥 Received MCP request to scan with context: {}", context)
         return try {
             val signals = forexScannerAgent.scan(context)
-            logger.info("Scan completed. Found {} signals for context: {}", signals.size, context)
+            logger.info("✅ Scan completed. Found {} signals for context: {}", signals.size, context)
             ResponseEntity.ok(signals)
         } catch (e: IllegalStateException) { // Specific exception for known issues like API key
             logger.error(
-                "Error processing MCP request for context {} due to invalid state (e.g., API key not set): {}",
+                "🔑 Error processing MCP request for context {} due to invalid state (e.g., API key not set): {}",
                 context,
                 e.message
             )
@@ -37,11 +37,11 @@ class McpController(
             ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(null) // Or provide a simple error message list: listOf(SignalError("Invalid state: ${e.message}"))
         } catch (e: RuntimeException) { // Catch broader runtime exceptions that might originate from services
-            logger.error("Runtime error processing MCP request for context {}: {}", context, e.message, e)
+            logger.error("💥 Runtime error processing MCP request for context {}: {}", context, e.message, e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(null) // Or: listOf(SignalError("Internal server error: ${e.message}"))
         } catch (e: Exception) { // Fallback for any other unexpected errors
-            logger.error("Unexpected error processing MCP request for context {}: {}", context, e.message, e)
+            logger.error("❌ Unexpected error processing MCP request for context {}: {}", context, e.message, e)
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(null) // Or: listOf(SignalError("Unexpected internal server error"))
         }

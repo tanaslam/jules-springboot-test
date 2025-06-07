@@ -33,7 +33,7 @@ class SignalAnalysisService {
 
         if (barSeries.barCount < smaLongPeriod + rsiPeriod) { // Ensure enough data for all indicators
             logger.warn(
-                "[{}] Not enough bars to generate signals. Required at least {} bars, but got {}.",
+                "⚠️ [{}] Not enough bars to generate signals. Required at least {} bars, but got {}.",
                 seriesName, smaLongPeriod + rsiPeriod, barSeries.barCount
             )
             return signals
@@ -45,7 +45,7 @@ class SignalAnalysisService {
         val smaLongIndicator = SMAIndicator(closePrice, smaLongPeriod)
 
         logger.info(
-            "[{}] Generating signals with params: RSI({}, {}, {}), SMA({}, {}), MinR:R {}, SL Lookback: {}",
+            "📊 [{}] Generating signals with params: RSI({}, {}, {}), SMA({}, {}), MinR:R {}, SL Lookback: {}",
             seriesName, rsiPeriod, rsiLow, rsiHigh, smaShortPeriod, smaLongPeriod, minRiskRewardRatio, stopLossLookBackPeriod
         )
 
@@ -62,14 +62,14 @@ class SignalAnalysisService {
 
             // Ensure previous bar's data is accessible
             if (i == 0) { // Should not happen due to startIndex logic, but as a safeguard
-                logger.debug("[{}] Skipping bar {} as it's the first bar in the series (after warm-up).", seriesName, i)
+                logger.debug("➖ [{}] Skipping bar {} as it's the first bar in the series (after warm-up).", seriesName, i)
                 continue
             }
             val prevSmaShort = smaShortIndicator.getValue(i - 1).doubleValue()
             val prevSmaLong = smaLongIndicator.getValue(i - 1).doubleValue()
 
             logger.debug(
-                "[{}] Bar {}: Time={}, Close={}, RSI={}, SMA_Short={}, SMA_Long={}, Prev_SMA_Short={}, Prev_SMA_Long={}",
+                "🔍 [{}] Bar {}: Time={}, Close={}, RSI={}, SMA_Short={}, SMA_Long={}, Prev_SMA_Short={}, Prev_SMA_Long={}",
                 seriesName, i, currentBar.endTime, currentBar.closePrice.doubleValue(),
                 currentRsi, currentSmaShort, currentSmaLong, prevSmaShort, prevSmaLong
             )
@@ -79,12 +79,12 @@ class SignalAnalysisService {
 
             // Buy Signal Logic: RSI Low and SMA Crossover Up
             if (currentRsi < rsiLow && prevSmaShort < prevSmaLong && currentSmaShort > currentSmaLong) {
-                logger.info("[{}] Potential BUY signal at bar {}: RSI ({}) < {} AND SMA crossover ({} < {} and {} > {})",
+                logger.info("📈 [{}] Potential BUY signal at bar {}: RSI ({}) < {} AND SMA crossover ({} < {} and {} > {})",
                     seriesName, i, currentRsi, rsiLow, prevSmaShort, prevSmaLong, currentSmaShort, currentSmaLong)
 
                 val stopLoss = calculateStopLoss(barSeries, i, stopLossLookBackPeriod, TradeDirection.LONG)
                 if (stopLoss >= entryPrice) {
-                     logger.warn("[{}] BUY Signal at bar {}: Stop loss ({}) is not below entry price ({}). Skipping.", seriesName, i, stopLoss, entryPrice)
+                     logger.warn("🚫 [{}] BUY Signal at bar {}: Stop loss ({}) is not below entry price ({}). Skipping.", seriesName, i, stopLoss, entryPrice)
                 } else {
                     val risk = entryPrice - stopLoss
                     val takeProfit = entryPrice + (risk * BigDecimal.valueOf(minRiskRewardRatio))
@@ -101,12 +101,12 @@ class SignalAnalysisService {
             }
             // Sell Signal Logic: RSI High and SMA Crossover Down
             else if (currentRsi > rsiHigh && prevSmaShort > prevSmaLong && currentSmaShort < currentSmaLong) {
-                logger.info("[{}] Potential SELL signal at bar {}: RSI ({}) > {} AND SMA crossover ({} > {} and {} < {})",
+                logger.info("📉 [{}] Potential SELL signal at bar {}: RSI ({}) > {} AND SMA crossover ({} > {} and {} < {})",
                     seriesName, i, currentRsi, rsiHigh, prevSmaShort, prevSmaLong, currentSmaShort, currentSmaLong)
 
                 val stopLoss = calculateStopLoss(barSeries, i, stopLossLookBackPeriod, TradeDirection.SHORT)
                  if (stopLoss <= entryPrice) {
-                    logger.warn("[{}] SELL Signal at bar {}: Stop loss ({}) is not above entry price ({}). Skipping.", seriesName, i, stopLoss, entryPrice)
+                    logger.warn("🚫 [{}] SELL Signal at bar {}: Stop loss ({}) is not above entry price ({}). Skipping.", seriesName, i, stopLoss, entryPrice)
                 } else {
                     val risk = stopLoss - entryPrice
                     val takeProfit = entryPrice - (risk * BigDecimal.valueOf(minRiskRewardRatio))
@@ -127,13 +127,13 @@ class SignalAnalysisService {
                 else if (currentRsi < rsiLow && !(prevSmaShort < prevSmaLong && currentSmaShort > currentSmaLong)) skipReason = "RSI ($currentRsi) in buy zone, but no SMA buy crossover."
                 else if (currentRsi > rsiHigh && !(prevSmaShort > prevSmaLong && currentSmaShort < currentSmaLong)) skipReason = "RSI ($currentRsi) in sell zone, but no SMA sell crossover."
 
-                logger.debug("[{}] Signal skipped for bar {}: {}", seriesName, i, skipReason)
+                logger.debug("➖ [{}] Signal skipped for bar {}: {}", seriesName, i, skipReason)
             }
 
             signal?.let {
                 signals.add(it)
                 logger.info(
-                    "[{}] {} Signal Generated at bar {}: Entry={}, SL={}, TP={}, R:R={}, Time={}",
+                    "💡 [{}] {} Signal Generated at bar {}: Entry={}, SL={}, TP={}, R:R={}, Time={}",
                     seriesName, it.direction, i,
                     it.entryPrice.toPlainString(), it.stopLoss.toPlainString(), it.takeProfit.toPlainString(),
                     it.riskRewardRatio.toPlainString(), it.timestamp
@@ -141,7 +141,7 @@ class SignalAnalysisService {
             }
         }
 
-        logger.info("[{}] Finished signal generation. Total signals: {}", seriesName, signals.size)
+        logger.info("✅ [{}] Finished signal generation. Total signals: {}", seriesName, signals.size)
         return signals
     }
 
@@ -160,7 +160,7 @@ class SignalAnalysisService {
 
         val startIndex = maxOf(0, currentIndex - lookBackPeriod + 1)
         if (startIndex > currentIndex) { // Should not happen if lookBackPeriod > 0
-             logger.warn("[{}] SL calc: Start index {} is greater than current index {}. Using current bar's low/high.", seriesName, startIndex, currentIndex)
+             logger.warn("⚠️ [{}] SL calc: Start index {} is greater than current index {}. Using current bar's low/high.", seriesName, startIndex, currentIndex)
              return if (direction == TradeDirection.LONG) barSeries.getBar(currentIndex).lowPrice.toBigDecimal()
                     else barSeries.getBar(currentIndex).highPrice.toBigDecimal()
         }
@@ -183,7 +183,7 @@ class SignalAnalysisService {
             }
         }
         val slBigDecimal = slPrice!!.toBigDecimal()
-        logger.debug("[{}] SL Calc for bar {}: Direction={}, Lookback={}, StartIdx={}, SL Price={}",
+        logger.debug("🛡️ [{}] SL Calc for bar {}: Direction={}, Lookback={}, StartIdx={}, SL Price={}",
             seriesName, currentIndex, direction, lookBackPeriod, startIndex, slBigDecimal.toPlainString())
         return slBigDecimal
     }

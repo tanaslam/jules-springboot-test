@@ -22,7 +22,7 @@ class MarketSchedulerAgent(
     // Runs at the start of every 15th minute of the hour. e.g., 00:00:00, 00:15:00, 00:30:00, 00:45:00
     @Scheduled(cron = "0 */15 * * * *")
     fun triggerForexScan() {
-        logger.info("Scheduled market scan starting...")
+        logger.info("⏰ Scheduled market scan starting...")
 
         val context = McpContext(
             currencyPairs = defaultCurrencyPairs,
@@ -36,17 +36,17 @@ class MarketSchedulerAgent(
         try {
             val signals = forexScannerAgent.scan(context)
             if (signals.isNotEmpty()) {
-                logger.info("Scheduled scan generated {} signals. First signal example: {}", signals.size, signals.firstOrNull())
+                logger.info("💡 Scheduled scan generated {} signals. First signal example: {}", signals.size, signals.firstOrNull())
                 // In a real application, these signals would be passed to another service
                 // for order placement, notification, or storage.
                 // For example: signalHandlerService.processSignals(signals)
             } else {
-                logger.info("Scheduled scan completed. No signals generated for context: {}", context)
+                logger.info("✅ Scheduled scan completed. No signals generated for context: {}", context)
             }
         } catch (e: Exception) {
             // This catch block ensures that an unexpected error in the scan
             // does not stop the scheduler from running future scans.
-            logger.error("Error during scheduled forex scan for context: {}", context, e)
+            logger.error("❌ Error during scheduled forex scan for context: {}", context, e)
         }
     }
 }
