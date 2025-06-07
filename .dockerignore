@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Gradle
+.gradle
+build/
+out/
+# gradlew, gradlew.bat and gradle/wrapper/ are needed by the Dockerfile's build stage
+# So, they should NOT be ignored if COPY . . was used for project files.
+# However, our Dockerfile specifically copies:
+# COPY build.gradle.kts settings.gradle.kts gradlew ./
+# COPY gradle ./gradle
+# COPY src ./src
+# So these files are explicitly included by Dockerfile's COPY.
+# Listing them here as ignored means they won't be part of context if COPY . . was used.
+# For current Dockerfile, this .dockerignore is mostly for `COPY src ./src` and any future broad COPY.
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.vscode/
+
+# Logs
+*.log
+logs/
+
+# Local build artifacts (if any outside 'build/')
+# e.g. Maven's target directory, though this is a Gradle project
+target/
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Secrets or local configuration not meant for image
+# API key is handled by ENV var in Dockerfile.
+# If other local config files were used, they'd be listed here.
+# e.g.:
+# application-local.yaml
+# .env
+# secrets/
+
+# Other temporary files
+*~
+*.swp
