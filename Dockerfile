@@ -12,7 +12,7 @@ FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 # Environment variable for the API key (can be overridden at runtime)
-ENV TWELVE_DATA_API_KEY=""
+ENV FOREX_DATA_API_KEY=""
 
 # Copy the JAR from the build stage
 # Ensure the JAR name matches what Spring Boot plugin generates, typically projectname-version.jar

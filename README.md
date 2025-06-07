@@ -11,7 +11,7 @@ based multi-agent system for Forex trading signal generation and strategy backte
 - Includes a scheduler (`MarketSchedulerAgent`) to run scans automatically (e.g., every 15 minutes with default parameters).
 - Supports backtesting of trading strategies against historical data (`BacktestAgent`).
 - Exports generated signals and backtest results to CSV files.
-- Configurable API key (via `application.yaml` or `TWELVE_DATA_API_KEY` environment variable).
+- Configurable API key (via `application.yaml` or `FOREX_DATA_API_KEY` environment variable).
 
 ## Prerequisites
 - Docker installed and running.
@@ -30,17 +30,17 @@ This will create an image tagged `forex-trading-mcp`.
 
 ### Running the Docker Container
 Once the image is built, you can run the application as a Docker container.
-You **must** provide your Twelve Data API key using the `TWELVE_DATA_API_KEY`
+You **must** provide your Twelve Data API key using the `FOREX_DATA_API_KEY`
 environment variable.
 
 ```sh
-docker run -d -p 8080:8080 -e TWELVE_DATA_API_KEY="YOUR_API_KEY_HERE" --name forex-mcp-app forex-trading-mcp
+docker run -d -p 8080:8080 -e FOREX_DATA_API_KEY="YOUR_API_KEY_HERE" --name forex-mcp-app forex-trading-mcp
 ```
 
 Breakdown of the command:
 - `-d`: Runs the container in detached mode (in the background).
 - `-p 8080:8080`: Maps port 8080 of the host to port 8080 of the container (where the Spring Boot app runs).
-- `-e TWELVE_DATA_API_KEY="YOUR_API_KEY_HERE"`: Sets the environment variable for the Twelve Data API key. **Replace `YOUR_API_KEY_HERE` with your actual key.**
+- `-e FOREX_DATA_API_KEY="YOUR_API_KEY_HERE"`: Sets the environment variable for the Twelve Data API key. **Replace `YOUR_API_KEY_HERE` with your actual key.**
 - `--name forex-mcp-app`: Assigns a name to the running container for easier management.
 - `forex-trading-mcp`: Specifies the Docker image to use.
 
@@ -87,8 +87,8 @@ docker rm forex-mcp-app
 
 ## Configuration
 - The Twelve Data API key **must** be set.
-  - When using Docker: via the `TWELVE_DATA_API_KEY` environment variable.
-  - If running locally (e.g., via IDE or `./gradlew bootRun`): by editing the `src/main/resources/application.yaml` file and replacing `YOUR_API_KEY_HERE` with your actual key.
+  - When using Docker: via the `FOREX_DATA_API_KEY` environment variable.
+  - If running locally (e.g., via IDE or `./gradlew bootRun`): by editing the `src/main/resources/application.yaml` file and replacing `YOUR_API_KEY_HERE` with your actual key (the key path inside yaml is `forex.data.api_key`).
 - Default strategy parameters are defined within the respective agent classes (e.g., `MarketSchedulerAgent` uses defaults from `StrategyParameters`). These can be overridden for on-demand scans via the `/api/mcp/scan` endpoint's request body.
 - Backtest results and signals are saved to CSV files in the `backtest_results` directory (relative to where the application is run, or inside the container if run via Docker without volume mounts for this directory).
 

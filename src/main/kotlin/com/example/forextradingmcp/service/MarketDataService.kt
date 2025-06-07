@@ -22,7 +22,7 @@ class MarketDataService(
     private val objectMapper: ObjectMapper
 ) {
 
-    @Value("\${twelve.data.api.key}")
+    @Value("\${forex.data.api_key}")
     private lateinit var apiKey: String
 
     private val logger = LoggerFactory.getLogger(MarketDataService::class.java)
@@ -30,7 +30,7 @@ class MarketDataService(
     fun fetchMarketData(symbol: String, interval: String, outputSize: Int = 70): BarSeries {
         logger.info("Fetching market data for symbol: {}, interval: {}, outputSize: {}", symbol, interval, outputSize)
         if (!::apiKey.isInitialized || apiKey.isBlank() || apiKey == "YOUR_API_KEY_HERE") {
-            logger.error("API key is not configured. Please set twelve.data.api.key in application.yaml or TWELVE_DATA_API_KEY environment variable.")
+            logger.error("API key is not configured. Please set forex.data.api_key in application.yaml or FOREX_DATA_API_KEY environment variable.")
             throw IllegalStateException("API key is not configured.")
         }
 
