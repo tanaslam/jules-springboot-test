@@ -16,16 +16,27 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url = uri("https://repo.spring.io/milestone") } // For Spring AI milestones
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.ai:spring-ai-bom:0.8.1")
+    }
 }
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-webflux") // For WebClient
+    implementation("org.springframework.ai:spring-ai-openai-spring-boot-starter")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv") // For CSV Export
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.ta4j:ta4j-core:0.15") // Check for latest version
-    implementation("org.slf4j:slf4j-api")
+    // slf4j-api and logback-classic are brought in by spring-boot-starter-logging
     implementation("org.springframework.boot:spring-boot-starter-logging")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

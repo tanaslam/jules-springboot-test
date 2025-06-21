@@ -1,113 +1,152 @@
-# Forex Trading MCP Application
+# Spring AI Forex Trading System
 
-This is a Spring Boot application using Kotlin that implements a Model Context Protocol (MCP)
-based multi-agent system for Forex trading signal generation and strategy backtesting.
+## 1. Project Overview
 
-## Features
-- Fetches Forex market data (e.g., 15-minute intervals) from Twelve Data API.
-- Generates trading signals based on RSI and SMA (e.g., SMA20, SMA50) indicators.
-- Enforces a configurable minimum risk/reward ratio (default 1:2).
-- Provides a REST API endpoint (`POST /api/mcp/scan`) to trigger on-demand scans with custom parameters.
-- Includes a scheduler (`MarketSchedulerAgent`) to run scans automatically (e.g., every 15 minutes with default parameters).
-- Supports backtesting of trading strategies against historical data (`BacktestAgent`).
-- Exports generated signals and backtest results to CSV files.
-- Configurable API key (via `application.yaml` or `FOREX_DATA_API_KEY` environment variable).
+This project is a Spring Boot application built with Kotlin (2.0) that implements an automated Forex trading system. It leverages Spring AI's conceptual MCP (Multi-Content Prompt) agents to manage different aspects of trading, from market scanning and signal generation to periodic backtesting and strategy recalibration.
 
-## Prerequisites
-- Docker installed and running.
-- A Twelve Data API key. You can get one from [twelvedata.com](https://twelvedata.com/).
+The system is designed to scan Forex data at regular intervals, apply technical analysis indicators (RSI, SMAs, Fibonacci retracement) to generate trading signals, and manage trades with a defined risk/reward ratio.
 
-## Using Docker
+## 2. Features
 
-### Building the Docker Image
-To build the Docker image for this application, navigate to the project root directory
-(where the `Dockerfile` is located) and run the following command:
+*   **Automated Market Scanning**: Scans Forex data every 15 minutes (configurable).
+*   **Technical Analysis Based Signals**:
+    *   Uses RSI (Relative Strength Index), SMA (Simple Moving Averages - 20/50 periods), and Fibonacci retracement levels (0.382, 0.5, 0.618) for filtering trading signals.
+    *   **BUY Condition**: RSI < 40, SMA20 crosses above SMA50, price touches/bounces near 61.8% Fibonacci retracement level of a prior up-swing.
+    *   **SELL Condition**: RSI > 60, SMA20 crosses below SMA50, price touches/bounces near 61.8% Fibonacci retracement level of a prior down-swing.
+*   **Risk Management**: Applies a 1:2 risk/reward ratio for calculated Stop Loss (SL) and Take Profit (TP) levels.
+*   **Automated Backtesting & Recalibration**:
+    *   Periodically (daily/weekly, configurable) backtests the trading strategy on past month's performance.
+    *   Tests variations of strategy parameters (e.g., RSI thresholds, SMA periods).
+    *   Automatically updates the live trading strategy with the optimal parameters found.
+*   **REST API**: Exposes an endpoint (`/mcp/scan`) to manually trigger market scans and retrieve generated signals.
+*   **CSV Logging**: Logs all generated trading signals to a CSV file for record-keeping and analysis.
 
-```sh
-docker build -t forex-trading-mcp .
-```
-This will create an image tagged `forex-trading-mcp`.
+## 3. System Architecture
 
-### Running the Docker Container
-Once the image is built, you can run the application as a Docker container.
-You **must** provide your Twelve Data API key using the `FOREX_DATA_API_KEY`
-environment variable.
+The system is composed of several key components:
 
-```sh
-docker run -d -p 8080:8080 -e FOREX_DATA_API_KEY="YOUR_API_KEY_HERE" --name forex-mcp-app forex-trading-mcp
-```
+*   **Services**:
+    *   `MarketDataService`: Fetches OHLCV (Open, High, Low, Close, Volume) data from the Twelve Data API and prepares it for analysis (e.g., as TA4J `BarSeries`).
+    *   `SignalAnalysisService`: Contains the core trading logic, including calculation of technical indicators and generation of BUY/SELL signals based on the active strategy.
+    *   `StrategyConfigService`: Manages the current trading strategy parameters. It loads initial parameters from configuration and allows them to be updated by the `BacktestAgent`.
+    *   `CsvExporterService`: Handles logging of trading signals to a CSV file.
+*   **Agents (Conceptual Spring AI MCP Agents)**:
+    *   `ForexScannerAgent`: Orchestrates the process of fetching market data, applying signal analysis using the current strategy, and logging signals.
+    *   `MarketSchedulerAgent`: Uses Spring's `@Scheduled` annotation to trigger the `ForexScannerAgent` at regular 15-minute intervals.
+    *   `BacktestAgent`: Periodically performs backtesting of different strategy parameter sets on historical data, identifies optimal parameters, and updates the `StrategyConfigService`.
+*   **Controller**:
+    *   `McpController`: Provides a RESTful API endpoint (`POST /mcp/scan`) for on-demand triggering of the `ForexScannerAgent`.
+*   **Configuration**:
+    *   `application.yml`: Centralized configuration for API keys, default trading parameters, scheduling CRON expressions, backtesting settings, etc.
+*   **Data Models**: Kotlin data classes representing OHLCV data, trading signals, strategy parameters, etc.
 
-Breakdown of the command:
-- `-d`: Runs the container in detached mode (in the background).
-- `-p 8080:8080`: Maps port 8080 of the host to port 8080 of the container (where the Spring Boot app runs).
-- `-e FOREX_DATA_API_KEY="YOUR_API_KEY_HERE"`: Sets the environment variable for the Twelve Data API key. **Replace `YOUR_API_KEY_HERE` with your actual key.**
-- `--name forex-mcp-app`: Assigns a name to the running container for easier management.
-- `forex-trading-mcp`: Specifies the Docker image to use.
+## 4. Configuration
 
-### Accessing the Application
-Once the container is running, the application's API will be accessible:
-- **REST API for on-demand scans:** `POST http://localhost:8080/api/mcp/scan`
-  - Body (example):
+Before running the application, you need to configure API keys and other settings in `src/main/resources/application.yml`:
+
+*   **Twelve Data API Key**:
+    ```yaml
+    twelve:
+      api:
+        key: YOUR_TWELVE_DATA_API_KEY_HERE
+    ```
+    Replace `YOUR_TWELVE_DATA_API_KEY_HERE` with your actual API key from [twelvedata.com](https://twelvedata.com).
+
+*   **OpenAI API Key (Spring AI - if used directly)**:
+    ```yaml
+    spring.ai:
+      openai:
+        api-key: YOUR_OPENAI_API_KEY_HERE
+    ```
+    This is needed if Spring AI features requiring it are actively used by the MCP agents.
+
+*   **Other Parameters**:
+    *   Default symbols for scheduled scans (`trading.defaults.symbols`).
+    *   Default interval for scans (`trading.defaults.interval`).
+    *   Initial strategy parameters (`trading.strategy.*`). These serve as a starting point before the `BacktestAgent` performs recalibration.
+    *   CRON expressions for scheduled market scans and backtesting (`scheduling.marketScanCron`, `scheduling.backtestCron`).
+    *   CSV file path (`csv.filePath`).
+    *   Backtesting parameters (`backtesting.*`).
+
+## 5. API Endpoints
+
+### 5.1. Trigger Manual Scan
+
+*   **Endpoint**: `POST /mcp/scan`
+*   **Description**: Manually triggers a market scan for the specified symbols and interval.
+*   **Request Body (JSON)**:
     ```json
     {
-      "currencyPairs": ["EUR/USD", "GBP/USD"],
-      "interval": "15min",
-      "outputSize": 100,
-      "strategyParameters": {
-        "rsiPeriod": 14,
-        "rsiLow": 30,
-        "rsiHigh": 70,
-        "smaShortPeriod": 20,
-        "smaLongPeriod": 50,
-        "stopLossLookBackPeriod": 10,
-        "minRiskRewardRatio": 2.0
-      }
+      "symbols": ["EUR/USD", "GBP/USD"],
+      "interval": "15min"
     }
     ```
+    *   `symbols`: A list of currency pairs (e.g., "EUR/USD", "USD/JPY").
+    *   `interval`: The time interval for data analysis (e.g., "1min", "5min", "15min", "1h", "1day").
+*   **Success Response (200 OK)**:
+    *   Returns a list of generated `TradingSignal` objects (which might be empty if no signals are found).
+    ```json
+    [
+      {
+        "timestamp": "2023-10-27T10:30:00Z",
+        "symbol": "EUR/USD",
+        "direction": "BUY",
+        "entry": 1.0550,
+        "stopLoss": 1.0445,
+        "takeProfit": 1.0760,
+        "riskRewardRatio": "1:2",
+        "rsi": 35.5,
+        "sma20": 1.0540,
+        "sma50": 1.0535,
+        "fibLevel": 0.618,
+        "outcome": null
+      }
+      // ... more signals
+    ]
+    ```
+*   **Error Responses**:
+    *   `400 Bad Request`: If the request payload is invalid (e.g., empty symbols list, blank interval).
+    *   `500 Internal Server Error`: If an unexpected error occurs during the scan.
 
-### Viewing Logs
-To view the logs from the running container:
-```sh
-docker logs forex-mcp-app
+## 6. How to Build and Run
+
+### Prerequisites
+*   Java Development Kit (JDK) 17 or later.
+*   Gradle (the project includes a Gradle wrapper `./gradlew`).
+*   Configured API keys in `application.yml`.
+
+### Build
+To build the application and run tests:
+```bash
+./gradlew clean build
 ```
-To follow the logs in real-time:
-```sh
-docker logs -f forex-mcp-app
+
+### Run
+To run the application:
+```bash
+./gradlew bootRun
 ```
-
-### Stopping and Removing the Container
-To stop the container:
-```sh
-docker stop forex-mcp-app
+Alternatively, you can run the executable JAR from the `build/libs/` directory:
+```bash
+java -jar build/libs/forex-trading-mcp-0.0.1-SNAPSHOT.jar
 ```
-To remove the stopped container:
-```sh
-docker rm forex-mcp-app
-```
+The application will start, and scheduled tasks will begin executing based on their CRON expressions. The API will be available at `http://localhost:8080`.
 
-## Configuration
-- The Twelve Data API key **must** be set.
-  - When using Docker: via the `FOREX_DATA_API_KEY` environment variable.
-  - If running locally (e.g., via IDE or `./gradlew bootRun`): by editing the `src/main/resources/application.yaml` file and replacing `YOUR_API_KEY_HERE` with your actual key (the key path inside yaml is `forex.data.api_key`).
-- Default strategy parameters are defined within the respective agent classes (e.g., `MarketSchedulerAgent` uses defaults from `StrategyParameters`). These can be overridden for on-demand scans via the `/api/mcp/scan` endpoint's request body.
-- Backtest results and signals are saved to CSV files in the `backtest_results` directory (relative to where the application is run, or inside the container if run via Docker without volume mounts for this directory).
+## 7. Backtesting & Strategy Recalibration
 
-## Development
+The `BacktestAgent` is configured to run periodically (e.g., weekly). It fetches historical data for the last 30 days (configurable) and tests a predefined set of strategy parameter variants (RSI thresholds, SMA periods).
 
-### Building from Source
-```sh
-./gradlew build
-```
+The agent simulates trades for each variant (using a simplified model) and calculates a win rate. The parameter set with the highest win rate is then chosen as the new optimal strategy, and the `StrategyConfigService` is updated. This means the `ForexScannerAgent` will use these new, recalibrated parameters for subsequent live scans.
 
-### Running Locally
-Ensure you have JDK 17 installed.
-1. Set your API key in `src/main/resources/application.yaml`.
-2. Run the application using:
-   ```sh
-   ./gradlew bootRun
-   ```
-The application will be available at `http://localhost:8080`.
----
+Recalibration details and chosen parameters are logged by the `BacktestAgent`.
 
-This README provides a good overview and necessary instructions for users.
+## 8. Future Enhancements (Potential)
+
+*   More sophisticated Spring AI MCP agent integration.
+*   Advanced backtesting engine (event-driven, proper equity tracking, drawdown calculation, etc.).
+*   More dynamic Stop Loss / Take Profit calculation (e.g., ATR-based).
+*   Persistent storage for strategy parameters and backtest results.
+*   Expanded set of technical indicators and strategy variations.
+*   Real-time trade execution capabilities (integration with a broker API).
+*   More comprehensive error handling and resilience.
 ```

@@ -1,0 +1,67 @@
+# Spring Boot Application Configuration
+server:
+  port: 8080
+
+spring:
+  application:
+    name: forex-trading-mcp
+
+# Twelve Data API Configuration
+twelve:
+  api:
+    key: YOUR_TWELVE_DATA_API_KEY_HERE # Replace with your actual API key
+    baseUrl: https://api.twelvedata.com
+
+# Default Trading Parameters
+trading:
+  defaults:
+    symbols:
+      - EUR/USD
+      - GBP/USD
+      - USD/JPY
+    interval: 15min # Default interval for scans, e.g., 1min, 5min, 15min, 30min, 45min, 1h, 2h, 4h, 1day, 1week, 1month
+  # Initial Strategy Parameters (can be overridden by BacktestAgent)
+  strategy:
+    rsiBuyThreshold: 40
+    rsiSellThreshold: 60
+    smaShortPeriod: 20
+    smaLongPeriod: 50
+    fibRetracementLevels: [0.382, 0.5, 0.618] # Must match Fibonacci levels used in logic
+
+# Scheduling Configuration
+scheduling:
+  marketScanCron: "0 */15 * * * ?" # Every 15 minutes
+  backtestCron: "0 0 3 * * SUN"   # Every Sunday at 3 AM (example, adjust as needed)
+
+# CSV Exporter Configuration
+csv:
+  filePath: "trading_signals_log.csv"
+  exportOutcomeAfterHours: 72 # Example: time in hours to check for trade outcome for backtesting purposes
+
+# Spring AI Configuration (OpenAI example)
+spring.ai:
+  openai:
+    api-key: YOUR_OPENAI_API_KEY_HERE # Replace with your actual OpenAI API key if using OpenAI features directly
+    # model: text-davinci-003 # Example model
+    # temperature: 0.7 # Example temperature
+
+# Logging Configuration (optional, Spring Boot provides defaults)
+logging:
+  level:
+    root: INFO
+    com.example.forextrading: DEBUG
+    org.springframework.ai: DEBUG # For Spring AI related logging
+
+# Backtesting Configuration
+backtesting:
+  daysToBacktest: 30 # Number of past days to fetch data for backtesting
+  parameterVariants:
+    rsiThresholds: # Pairs of [buy, sell]
+      - [30, 70]
+      - [35, 65]
+      - [40, 60] # Default
+    smaPeriods: # Pairs of [short, long]
+      - [10, 30]
+      - [15, 40]
+      - [20, 50] # Default
+    # Fibonacci levels are fixed as per requirements for now, but could be made variable here too
